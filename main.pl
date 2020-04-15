@@ -16,22 +16,22 @@ $response = $ua->request($req);
 @resp = split(/\n/, $response->content);
 foreach $r (@resp) {
 	chomp $r;
-	if ($r =~ /href="([\w\/\.\~\@\;\:\$]*)"([.\n]*)/) {
-		print "tag for anchor: $r";
+	if ($r =~ /(href="[\w\/\.\:\$]*?)"/) {
+		print "tag for anchor: $1 \n";
 	}
 	elsif ($r =~ /http\:\/\//) {
-		print "absolute URLS: $r";
+		#print "absolute URLS: $r";
 	}
 	elsif ($r =~ /mailto\:(.*)/) {
-		print "email addresses: $r";
+		#print "email addresses: $r";
 	}
 	elsif ($r =~ /(http:\/\/[\w*\.]*\w*)\/.*/) {
-		print "server addresses in URL: $r";
+		#print "server addresses in URL: $r";
 	}
 	else {
-		print $r."\n";
+		#print $r."\n";
 	}
-	print "\n";
+	#print "\n";
 }
 
 #open(INFILE, "url.txt");
