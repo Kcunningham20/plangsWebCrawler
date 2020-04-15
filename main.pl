@@ -14,7 +14,7 @@ while($validLine == 1) {
 	open(TARGET, "<", $targetfile);
 	$line = <TARGET>;
 	chomp $line;
-	@lines = <TARGET>;
+	my @lines = <TARGET>;
 	close(TARGET);
 
 	print "\nCurrent Line Crawling: " .$line ."\n";
@@ -27,8 +27,8 @@ while($validLine == 1) {
 	$line =~ /(http[s]?\:\/\/.*)\/?/;
 	$root = $1;
 	print "Root is $root\n";
-	@newSites;
-	@emails;
+	my @newSites;
+	my @emails;
 	$req = HTTP::Request->new(GET=> $line);
 	$ua = LWP::UserAgent->new;
 	$response = $ua->request($req);
@@ -81,9 +81,15 @@ while($validLine == 1) {
 	print READ "\n$line";
 	close(READ);
 	
-	if (length(@lines)+length(@newSites) == 0) {
+	if (length(@lines) == 1 and length(@newSites) == 1 and length($lines[0]) < 1 and length($newSites[0]) < 1) {
 		$validLine = 0;
+		print "No more sites to check";
 	}
+	#print "\nCombined length is: " . (length(@lines)+length(@newSites));
+	#print "\nLength for lines is: " . length(@lines);
+	#print "\nLength for newSites is: " . length(@newSites);
+	#print "\nValid Line is: $validLine";
+	#print "\nLength of line 0 is: " . length($lines[0]);
 }
 
 #open(INFILE, "url.txt");
