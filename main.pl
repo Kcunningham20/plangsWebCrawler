@@ -1,37 +1,78 @@
 require HTTP::Request;
 require LWP::UserAgent;
 
-open(INFILE, "target.txt");
-#@lines = <INFILE>;
-#print @lines;
-$line = <INFILE>; #read in first line
-close(INFILE);
+%sitesHit = ();
+$sitesHit{"https://xkcd.com/387/"} = 1;
+$targetfile = "target.txt";
+$emailfile = "emails.txt";
+$readfile = "read.txt";
 
-print "\nCurrent Line Crawling: " .$line ."\n";
+$validLine = 1;
+while($validLine == 1) {
+	open(TARGET, "<", $targetfile);
+	$line = <TARGET>;
+	chomp $line;
+	while(exists($sitesHit{$line})) {
+		$line = <TARGET>;
+		chomp $line;
+		print $line;
+	}
+	@lines = <TARGET>;
+	close(TARGET);
 
-$req = HTTP::Request->new(GET=> $line);
-$ua = LWP::UserAgent->new;
-$response = $ua->request($req);
-#print $response->content;
-@resp = split(/\n/, $response->content);
-foreach $r (@resp) {
-	chomp $r;
-	if ($r =~ /(href="[\w\/\.\:\$]*?)"/) {
-		print "tag for anchor: $1 \n";
+	print "\nCurrent Line Crawling: " .$line ."\n";
+	$sitesHit{$line} = 1;
+
+	open(TARGET, ">", $targetfile);
+	print TARGET @lines;
+	close(TARGET);
+
+	$line =~ /(http[s]?\:\/\/.*)\/?/;
+	$root = $1;
+	print "Root is $root\n";
+	@newSites;
+	@emails;
+	$req = HTTP::Request->new(GET=> $line);
+	$ua = LWP::UserAgent->new;
+	$response = $ua->request($req);
+	#print $response->content;
+	@resp = split(/\n/, $response->content);
+	foreach $r (@resp) {
+		chomp $r;
+		if ($r =~ /(http[s]?\:\/\/.*?)"/) {
+			print "absolute URL: $1 \n";
+			push @newSites, "\n$1";
+		}
+		elsif ($r =~ /href="([\w\/\.\:\$]*?)"/) {
+			print "tag for anchor: $1 \n";
+			push @newSites, "\n$root$1";
+		}
+		elsif ($r =~ /mailto\:(.*?)"/) {
+			print "mail to: $1";
+			push @emails, "\n$1";
+		}
+		else {
+			#print $r."\n";
+		}
+		#print "\n";
 	}
-	elsif ($r =~ /http\:\/\//) {
-		#print "absolute URLS: $r";
+
+
+	open(TARGET, ">>", $targetfile);
+	print TARGET @newSites;
+	close(TARGET);
+
+	open(EMAILS, ">>", $emailfile);
+	print EMAILS @emails;
+	close(EMAILS);
+
+	open(READ, ">>", $readfile);
+	print READ $line;
+	close(READ);
+	
+	if (length(@lines)+length(@newSites) == 0) {
+		$validLine = 0;
 	}
-	elsif ($r =~ /mailto\:(.*)/) {
-		#print "email addresses: $r";
-	}
-	elsif ($r =~ /(http:\/\/[\w*\.]*\w*)\/.*/) {
-		#print "server addresses in URL: $r";
-	}
-	else {
-		#print $r."\n";
-	}
-	#print "\n";
 }
 
 #open(INFILE, "url.txt");
