@@ -2,7 +2,9 @@ require HTTP::Request;
 require LWP::UserAgent;
 
 %sitesHit = ();
+%emailShit = ();
 $sitesHit{"https://xkcd.com/387/"} = 1;
+#$emailShit{"jesus@God.com"} = 1;
 $targetfile = "target.txt";
 $emailfile = "emails.txt";
 $readfile = "read.txt";
@@ -12,11 +14,6 @@ while($validLine == 1) {
 	open(TARGET, "<", $targetfile);
 	$line = <TARGET>;
 	chomp $line;
-	while(exists($sitesHit{$line})) {
-		$line = <TARGET>;
-		chomp $line;
-		print $line;
-	}
 	@lines = <TARGET>;
 	close(TARGET);
 
@@ -39,24 +36,38 @@ while($validLine == 1) {
 	@resp = split(/\n/, $response->content);
 	foreach $r (@resp) {
 		chomp $r;
+		
 		if ($r =~ /(http[s]?\:\/\/.*?)"/) {
 			print "absolute URL: $1 \n";
-			push @newSites, "\n$1";
+			print "Sites Hash: $sitesHit{$1}\n";
+			if ($sitesHit{$1} != 1) {
+				push @newSites, "\n$1";
+				$sitesHit{$1} = 1;
+			}
 		}
 		elsif ($r =~ /href="([\w\/\.\:\$]*?)"/) {
 			print "tag for anchor: $1 \n";
-			push @newSites, "\n$root$1";
+			my $url = $root . $1;
+			if ($sitesHit{$url} != 1) {
+				push @newSites, "\n$url";
+				$sitesHit{$url} = 1;
+			}
 		}
 		elsif ($r =~ /mailto\:(.*?)"/) {
-			print "mail to: $1";
-			push @emails, "\n$1";
+			print "mail to: $1\n";
+			print "Email hash: $emailShit{$1}\n";
+			if ($emailShit{$1} != 1) {
+				push @emails, "\n$1";
+				$emailShit{$1} = 1;
+				print "Set Email Hash for $1: $emailShit{$1}\n";
+			}
 		}
 		else {
 			#print $r."\n";
 		}
 		#print "\n";
 	}
-
+	
 
 	open(TARGET, ">>", $targetfile);
 	print TARGET @newSites;
@@ -67,7 +78,7 @@ while($validLine == 1) {
 	close(EMAILS);
 
 	open(READ, ">>", $readfile);
-	print READ $line;
+	print READ "\n$line";
 	close(READ);
 	
 	if (length(@lines)+length(@newSites) == 0) {
